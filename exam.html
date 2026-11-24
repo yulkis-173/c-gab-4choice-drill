@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<title>C-GAB 本番形式サンプル</title>
+<style>
+:root{--paper:#f5f2ea;--card:#fffdf8;--ink:#1d2733;--muted:#66707c;--line:#ded8cc;--navy:#17324d;--blue:#2f6690;--orange:#b5651d;--green:#2f6b4f;--red:#a63d3d}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 10% 0%,rgba(47,102,144,.10),transparent 30rem),radial-gradient(circle at 90% 10%,rgba(181,101,29,.08),transparent 28rem),var(--paper);color:var(--ink);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;line-height:1.7;min-height:100vh}
+button{font:inherit;color:inherit}
+.app{width:min(900px,100%);margin:0 auto;padding:20px 16px 48px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 2px 16px}
+.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--muted);font-weight:800}
+h1{font-size:clamp(22px,5.4vw,32px);margin:2px 0 0;line-height:1.25}
+.ghost{border:1px solid var(--line);background:rgba(255,253,248,.7);border-radius:999px;padding:8px 14px;font-size:13px;color:var(--muted);cursor:pointer;text-decoration:none}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 30px rgba(23,50,77,.08);padding:22px}
+.lead{color:#43505e;font-size:15px;margin:6px 0 18px}
+.cards{display:grid;gap:10px}
+.card{text-align:left;border:1px solid var(--line);background:#fffdfa;border-radius:16px;padding:16px;cursor:pointer}
+.card:hover{border-color:#9aa6b2}
+.card .name{font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--blue)}
+.card[data-cat="非言語"] .dot{background:var(--orange)}
+.card[data-cat="英語"] .dot{background:var(--green)}
+.meta{font-size:12px;color:var(--muted);margin-top:4px}
+.note{font-size:12px;color:var(--muted);margin-top:14px}
+.hidden{display:none!important}
+.quiz-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.chip{display:inline-flex;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:800;background:#eaf0f5;color:var(--blue)}
+.chip.非言語{background:#f8eee2;color:#8a4a12}.chip.英語{background:#e9f2ec;color:#285d43}
+.timer{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.timer.over{color:var(--red);font-weight:800}
+.progress{font-size:12px;color:var(--muted)}
+.bar{height:6px;background:#e9e2d5;border-radius:99px;overflow:hidden;margin:8px 0 16px}
+.bar i{display:block;height:100%;background:var(--navy);border-radius:99px;transition:width .2s}
+.set-title{font-size:13px;color:var(--muted);margin-bottom:10px}
+.passage{background:#f7f3e9;border:1px solid #e8e1d4;border-radius:14px;padding:16px;font-size:14px;line-height:1.9;max-height:300px;overflow:auto;margin-bottom:16px;white-space:pre-wrap}
+.tablewrap{overflow:auto;margin-bottom:16px;border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:13px;background:#fffdfa}
+th,td{border-bottom:1px solid #e8e1d4;padding:9px 10px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{background:#eaf0f5;color:var(--navy);font-weight:800}
+.qtext{font-size:clamp(16px,4vw,20px);font-weight:750;line-height:1.7;margin:0 0 16px;white-space:pre-wrap}
+.choices{display:grid;gap:9px}
+.choice{display:flex;gap:11px;align-items:flex-start;text-align:left;width:100%;border:1.5px solid var(--line);background:#fffdfa;border-radius:13px;padding:13px 14px;cursor:pointer;line-height:1.6;font-size:14px}
+.choice:hover:not(:disabled){border-color:#9aa6b2}
+.choice:disabled{cursor:default}
+.letter{flex:0 0 24px;height:24px;border-radius:50%;background:#eef1f3;color:#53606e;font-size:11px;font-weight:800;display:grid;place-items:center;margin-top:2px}
+.choice.correct{border-color:#3d8b62;background:#eef7f1}.choice.correct .letter{background:#3d8b62;color:#fff}
+.choice.wrong{border-color:#b45a5a;background:#fbeeee}.choice.wrong .letter{background:#b45a5a;color:#fff}
+.choice.dim{opacity:.6}
+.feedback{margin-top:14px;border-radius:13px;padding:13px 15px;font-size:13.5px;display:none}
+.feedback.show{display:block}
+.feedback.ok{background:#edf7f0;border:1px solid #bcdcc8}.feedback.ng{background:#fbeeee;border:1px solid #e5c1c1}
+.feedback .verdict{font-weight:900;font-size:15px;margin-bottom:4px}
+.feedback .ans{font-weight:700;margin:4px 0}
+.feedback .exp{color:#46515d}
+.next{width:100%;border:0;border-radius:13px;background:var(--navy);color:#fff;padding:14px;font-weight:800;margin-top:14px;cursor:pointer}
+.kbd{text-align:center;font-size:11px;color:var(--muted);margin-top:8px}
+.result h2{margin:0 0 4px;font-size:24px}
+.score{font-size:clamp(40px,12vw,62px);font-weight:900;color:var(--navy);line-height:1.1}
+.score small{font-size:15px;color:var(--muted)}
+.sub{color:var(--muted);font-size:13px;margin:6px 0 16px}
+.review{display:grid;gap:8px;margin-top:12px}
+.review .item{border:1px solid #ead5d5;background:#fdf6f6;border-radius:11px;padding:10px 12px;font-size:13px}
+.actions{display:grid;gap:9px;margin-top:16px}
+.actions button{border:1px solid var(--line);background:#fffdfa;border-radius:12px;padding:12px;font-weight:800;cursor:pointer}
+.actions button.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.footer{text-align:center;font-size:11px;color:#8a939d;margin-top:24px;line-height:1.7}
+@media(max-width:560px){.app{padding:14px 12px 40px}.panel{padding:18px;border-radius:17px}.passage{max-height:240px;font-size:13px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div><div class="eyebrow">C-GAB 本番形式サンプル</div><h1>実戦形式ドリル</h1></div>
+    <a class="ghost" href="./index.html">暗記ドリルへ</a>
+  </header>
+
+  <main id="home" class="panel">
+    <p class="lead">本番の聞かれ方に寄せたオリジナル例題です。言語は長文＋4問のA/B/C、非言語は表＋5択、英語は英文＋3問のA/B/Cで構成しています。公式の選択肢数は一部非公表のため、対策サイトで多い形式を採用したサンプルです。</p>
+    <div class="cards" id="cards"></div>
+    <div class="note">各セットの目標時間：言語・非言語 2分、英語 1分30秒。時間は目安で、超過しても続けられます。</div>
+  </main>
+
+  <main id="quiz" class="panel hidden">
+    <div class="quiz-head">
+      <span class="chip" id="chip">言語</span>
+      <span class="progress" id="progress"></span>
+      <span class="timer" id="timer">0:00 / 2:00</span>
+    </div>
+    <div class="bar"><i id="bar" style="width:0%"></i></div>
+    <div class="set-title" id="setTitle"></div>
+    <div id="source"></div>
+    <p class="qtext" id="qtext"></p>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next hidden" id="next" type="button">次へ</button>
+    <div class="kbd" id="kbd">1〜3で選択 ／ Enterで次へ</div>
+  </main>
+
+  <main id="result" class="panel result hidden">
+    <h2>セット終了</h2>
+    <div class="score" id="score">0<small> / 0</small></div>
+    <div class="sub" id="sub"></div>
+    <div class="review" id="review"></div>
+    <div class="actions">
+      <button class="primary" id="retry" type="button">もう一度</button>
+      <button id="homeBtn2" type="button">メニューに戻る</button>
+    </div>
+  </main>
+
+  <div class="footer">元データ：C-GAB 解答集 完全版 2026-11-17／本番形式の参考：キャリタス就活・テストビズ・ナレッジバンドル・PORTキャリア。例題本文はこのアプリ用に作成したオリジナルです。</div>
+</div>
+
+<script>
+const SETS = [{"id":"言1","category":"言語","title":"リモートワークとオフィス","passage":"在宅勤務が広がった当初、多くの企業はオフィスを縮小しようとした。しかし、数年が経つと、オフィスの役割を見直す動きが出てきた。調査によれば、在宅勤務の生産性は職種によって差があり、集中作業が多い職種では向上する一方、企画や調整が多い職種では対面の雑談から生まれるアイデアが失われやすいという。ある企業は、個人作業は在宅、集団での議論や新人教育は出社というように、仕事の内容で場所を選ぶ制度を導入した。オフィスをなくすのではなく、目的に応じて使い分けることが重要だという考え方である。","kind":"text","target_sec":120,"questions":[{"q":"在宅勤務の生産性は、どの職種でも同じように向上する。","answer":1,"explanation":"本文では、在宅勤務の生産性は職種によって差があると述べている。"},{"q":"対面の雑談は、企画や調整の仕事でアイデアの源になることがある。","answer":0,"explanation":"本文では、対面の雑談から生まれるアイデアが失われやすいと述べている。"},{"q":"オフィスを縮小した企業は、すべて在宅勤務に移行した。","answer":2,"explanation":"縮小しようとした企業があるだけで、すべてが移行したとは述べていない。"},{"q":"仕事の内容に応じて在宅と出社を使い分ける企業がある。","answer":0,"explanation":"個人作業は在宅、集団議論は出社という制度を導入した企業がある。"}]},{"id":"言2","category":"言語","title":"食品ロスとアプリ","passage":"食品ロスは、家庭と事業者の両方で発生している。事業者では、売れ残りや規格外品が廃棄されることが多い。近年は、賞味期限が近い食品をアプリで安く販売する取り組みが広がっている。ただし、こうしたアプリは、もともと廃棄される予定だった食品を減らす効果がある一方、アプリに出品するために新たに食品を仕入れる事業者もおり、全体としての削減につながるかは慎重に評価する必要がある。家庭では、買いすぎや作りすぎを避けることが基本であり、冷蔵庫の在庫を確認する習慣が有効だという。","kind":"text","target_sec":120,"questions":[{"q":"食品ロスは、家庭よりも事業者の方が多い。","answer":2,"explanation":"本文は家庭と事業者の両方で発生すると述べるだけで、量の比較はしていない。"},{"q":"賞味期限が近い食品をアプリで安く販売する取り組みがある。","answer":0,"explanation":"本文に、賞味期限が近い食品をアプリで安く販売する取り組みが広がっているとある。"},{"q":"アプリの普及は、必ず食品ロスの総量を減らす。","answer":1,"explanation":"新たに食品を仕入れる事業者もおり、慎重な評価が必要と述べている。"},{"q":"家庭では、冷蔵庫の在庫を確認する習慣が有効だ。","answer":0,"explanation":"本文の最後に、冷蔵庫の在庫確認が有効だと述べている。"}]},{"id":"言3","category":"言語","title":"生成AIと創作","passage":"生成AIは、文章や画像、音楽などを作れるようになった。これにより、短時間で多くの案を出すことができる一方、既存の作品に似た表現が生まれることへの懸念もある。著作権の扱いや、AIが作った作品に著作者を認めるかどうかは、各国で議論が続いている。重要なのは、AIを人間の代わりに置くのではなく、案を出す段階で使い、最終的な判断を人間が行うことだという指摘がある。AIの出力をそのまま公開する場合には、事実確認や権利関係の確認が欠かせない。","kind":"text","target_sec":120,"questions":[{"q":"生成AIは、文章や画像、音楽を作ることができる。","answer":0,"explanation":"本文の冒頭に、文章や画像、音楽などを作れるようになったとある。"},{"q":"AIが作った作品に著作者を認めるかどうかは、すべての国で決着している。","answer":1,"explanation":"各国で議論が続いていると述べている。"},{"q":"AIが作った作品の市場評価は、人間の作品より高い。","answer":2,"explanation":"市場評価を比較した記述は本文にない。"},{"q":"AIの出力をそのまま公開する場合、事実確認や権利関係の確認が必要だ。","answer":0,"explanation":"本文の最後に、事実確認や権利関係の確認が欠かせないとある。"}]},{"id":"非1","category":"非言語","title":"事業別売上高","passage":{"headers":["事業","2023年売上高（百万円）","2024年売上高（百万円）","従業員数（人）"],"rows":[["A","400","480","20"],["B","300","330","15"],["C","200","260","10"],["D","100","125","5"]]},"kind":"table","target_sec":120,"questions":[{"q":"2024年の売上高が前年比で最も伸びた事業はどれか。","choices":["A事業","B事業","C事業","D事業","判断できない"],"answer":2,"explanation":"A 20%、B 10%、C 30%、D 25%。C事業が最も高い。"},{"q":"2024年の全社売上高に占めるA事業の割合はおよそ何%か。","choices":["30%","35%","40%","45%","50%"],"answer":2,"explanation":"480 ÷ 1,195 × 100 ≒ 40.2%。約40%。"},{"q":"2024年の従業員1人あたり売上高が最も高い事業はどれか。","choices":["A事業","B事業","C事業","D事業","判断できない"],"answer":2,"explanation":"A 24、B 22、C 26、D 25。C事業が最も高い。"},{"q":"2024年の全社売上高は、2023年のおよそ何倍か。","choices":["1.10倍","1.15倍","1.20倍","1.25倍","1.30倍"],"answer":2,"explanation":"1,195 ÷ 1,000 = 1.195。約1.20倍。"}]},{"id":"非2","category":"非言語","title":"地域別人口と面積","passage":{"headers":["地域","人口（万人）","面積（km²）"],"rows":[["北","300","500"],["東","450","900"],["西","250","500"],["南","200","1,000"]]},"kind":"table","target_sec":120,"questions":[{"q":"人口密度が最も高い地域はどれか。","choices":["北","東","西","南","判断できない"],"answer":0,"explanation":"北0.60、東0.50、西0.50、南0.20。北が最も高い。"},{"q":"全人口に占める東地域の割合は何%か。","choices":["25.0%","30.0%","37.5%","40.0%","45.0%"],"answer":2,"explanation":"450 ÷ 1,200 × 100 = 37.5%。"},{"q":"面積が最も大きい地域はどれか。","choices":["北","東","西","南","判断できない"],"answer":3,"explanation":"南が1,000km²で最も大きい。"},{"q":"西地域の人口は、南地域の人口の何倍か。","choices":["0.8倍","1.0倍","1.25倍","1.5倍","2.0倍"],"answer":2,"explanation":"250 ÷ 200 = 1.25倍。"}]},{"id":"非3","category":"非言語","title":"年代別利用者数","passage":{"headers":["年代","2023年利用者（人）","2024年利用者（人）"],"rows":[["10代","100","120"],["20代","200","260"],["30代","150","150"],["40代","100","90"],["50代以上","50","60"]]},"kind":"table","target_sec":120,"questions":[{"q":"2024年の利用者が前年比で最も増えた年代はどれか。","choices":["10代","20代","30代","40代","50代以上"],"answer":1,"explanation":"10代+20%、20代+30%、30代0%、40代-10%、50代以上+20%。20代が最も高い。"},{"q":"2024年の全利用者に占める20代の割合はおよそ何%か。","choices":["26.0%","30.0%","38.2%","42.0%","50.0%"],"answer":2,"explanation":"260 ÷ 680 × 100 ≒ 38.2%。"},{"q":"2024年の利用者が前年より減った年代はどれか。","choices":["10代","20代","30代","40代","50代以上"],"answer":3,"explanation":"40代だけが100人から90人に減っている。"},{"q":"2024年の全利用者は、2023年のおよそ何倍か。","choices":["1.05倍","1.10倍","1.13倍","1.20倍","1.30倍"],"answer":2,"explanation":"680 ÷ 600 ≒ 1.133。約1.13倍。"}]},{"id":"英1","category":"英語","title":"Westfield Library","passage":"The Westfield Library will extend its opening hours from next month. On weekdays, it will stay open until 9 p.m. instead of 7 p.m. The extension is funded by the city, and the library will hire two additional staff members. The library director says the change was requested by students who study there after school. The weekend hours will remain the same. The library cafe will close at 8 p.m. on weekdays.","kind":"text","target_sec":90,"questions":[{"q":"The library will open later on weekends.","choices":["A. True","B. False","C. Cannot say"],"answer":1,"explanation":"The passage says weekend hours will remain the same, so this is false."},{"q":"The extended weekday hours are funded by the city.","choices":["A. True","B. False","C. Cannot say"],"answer":0,"explanation":"The passage says the extension is funded by the city."},{"q":"The number of students using the library will double.","choices":["A. True","B. False","C. Cannot say"],"answer":2,"explanation":"The passage does not say the number will double."}]},{"id":"英2","category":"英語","title":"Northside Electronics","passage":"Northside Electronics has started a recycling program for old computers. Customers who bring in a computer receive a 10% discount on a new purchase. The company says the program is part of its goal to reduce electronic waste. Collected devices are sent to a partner company, which repairs some of them and recycles the rest. The program is currently available only at the Northside store. The company plans to expand it to other stores next year.","kind":"text","target_sec":90,"questions":[{"q":"Customers receive a discount when they bring in an old computer.","choices":["A. True","B. False","C. Cannot say"],"answer":0,"explanation":"The passage says customers receive a 10% discount."},{"q":"The recycling program is available at all Northside stores.","choices":["A. True","B. False","C. Cannot say"],"answer":1,"explanation":"It is currently available only at the Northside store."},{"q":"The partner company sells the repaired computers.","choices":["A. True","B. False","C. Cannot say"],"answer":2,"explanation":"The passage does not say whether the partner company sells them."}]},{"id":"英3","category":"英語","title":"Harbor Museum","passage":"The Harbor Museum introduced free entry on the first Saturday of every month last year. Visitor numbers on those Saturdays are usually twice as high as on other Saturdays. Most of the additional visitors are local families. The museum shop remains open, but the cafe closes early because staff help with crowd control. The museum will review the program after one more year.","kind":"text","target_sec":90,"questions":[{"q":"The museum offers free entry every Saturday.","choices":["A. True","B. False","C. Cannot say"],"answer":1,"explanation":"Free entry is on the first Saturday of every month, not every Saturday."},{"q":"Visitor numbers on free Saturdays are usually twice as high as on other Saturdays.","choices":["A. True","B. False","C. Cannot say"],"answer":0,"explanation":"The passage says visitor numbers are usually twice as high."},{"q":"The free-entry program will continue indefinitely.","choices":["A. True","B. False","C. Cannot say"],"answer":2,"explanation":"The museum will review the program after one more year, so the future is not decided."}]}];
+const ABC = ["A. 本文から論理的に考えて明らかに正しい","B. 本文から論理的に考えて明らかに間違っている","C. 本文の情報だけでは判断できない"];
+const state = {set:null, idx:0, answered:false, correct:0, wrong:[], start:0, timer:null};
+const el = id => document.getElementById(id);
+
+function show(id){for(const x of ["home","quiz","result"])el(x).classList.toggle("hidden",x!==id);window.scrollTo({top:0,behavior:"smooth"});}
+function fmtTime(s){const m=Math.floor(s/60);const r=s%60;return m+":"+String(r).padStart(2,"0");}
+function home(){
+  const cats=["言語","非言語","英語"];
+  const box=el("cards");box.innerHTML="";
+  for(const c of cats){
+    const items=SETS.filter(s=>s.category===c);
+    const b=document.createElement("button");b.type="button";b.className="card";b.dataset.cat=c;
+    b.innerHTML=`<div class="name"><span class="dot"></span>${c}</div><div class="meta">${items.length}セット・${items.reduce((a,s)=>a+s.questions.length,0)}問</div>`;
+    b.addEventListener("click",()=>{startSet(items[0]);});
+    box.appendChild(b);
+  }
+}
+function startSet(s){
+  state.set=s;state.idx=0;state.correct=0;state.wrong=[];state.answered=false;state.start=Date.now();
+  el("chip").textContent=s.category;el("chip").className="chip "+s.category;
+  el("setTitle").textContent=s.title;
+  el("source").innerHTML="";
+  if(s.kind==="table"){
+    const d=document.createElement("div");d.className="tablewrap";
+    let html="<table><thead><tr>"+s.passage.headers.map(h=>`<th>${h}</th>`).join("")+"</tr></thead><tbody>";
+    for(const row of s.passage.rows)html+="<tr>"+row.map(c=>`<td>${c}</td>`).join("")+"</tr>";
+    html+="</tbody></table>";d.innerHTML=html;el("source").appendChild(d);
+  } else {
+    const d=document.createElement("div");d.className="passage";d.textContent=s.passage;el("source").appendChild(d);
+  }
+  show("quiz");render();
+  clearInterval(state.timer);state.timer=setInterval(tick,250);tick();
+}
+function tick(){
+  const s=state.set;if(!s)return;
+  const elapsed=Math.floor((Date.now()-state.start)/1000);
+  const t=el("timer");t.textContent=fmtTime(elapsed)+" / "+fmtTime(s.target_sec);t.classList.toggle("over",elapsed>s.target_sec);
+}
+function render(){
+  const s=state.set;const q=s.questions[state.idx];state.answered=false;
+  el("progress").textContent=(state.idx+1)+" / "+s.questions.length;
+  el("bar").style.width=Math.round(state.idx/s.questions.length*100)+"%";
+  el("qtext").textContent=q.q;
+  const choices=q.choices||ABC;
+  const box=el("choices");box.innerHTML="";
+  choices.forEach((c,i)=>{
+    const b=document.createElement("button");b.type="button";b.className="choice";b.dataset.i=i;
+    const label=String(c).replace(/^[A-E]\.\s*/,"");
+    b.innerHTML=`<span class="letter">${"ABCDE"[i]}</span><span>${label}</span>`;
+    b.addEventListener("click",()=>choose(i));box.appendChild(b);
+  });
+  el("kbd").textContent="1〜"+choices.length+"で選択 ／ Enterで次へ";
+  const fb=el("feedback");fb.className="feedback";fb.innerHTML="";el("next").classList.add("hidden");
+}
+function choose(i){
+  if(state.answered)return;state.answered=true;
+  const s=state.set;const q=s.questions[state.idx];const choices=q.choices||ABC;
+  if(i<0||i>=choices.length)return;
+  const ok=i===q.answer;
+  [...el("choices").querySelectorAll(".choice")].forEach((b,j)=>{b.disabled=true;if(j===q.answer)b.classList.add("correct");else if(j===i)b.classList.add("wrong");else b.classList.add("dim");});
+  const ansLabel=String(choices[q.answer]).replace(/^[A-E]\.\s*/,"");
+  if(ok)state.correct++;else state.wrong.push({q:q.q,correct:ansLabel,exp:q.explanation});
+  const fb=el("feedback");fb.className="feedback show "+(ok?"ok":"ng");
+  fb.innerHTML=`<div class="verdict">${ok?"正解":"不正解"}</div><div class="ans">正解：${"ABCDE"[q.answer]}．${ansLabel}</div><div class="exp">${q.explanation}</div>`;
+  el("next").classList.remove("hidden");
+  el("next").textContent=state.idx+1>=s.questions.length?"結果を見る":"次へ";
+}
+function next(){
+  if(!state.answered)return;
+  state.idx++;
+  if(state.idx>=state.set.questions.length)finish();else render();
+}
+function finish(){
+  clearInterval(state.timer);show("result");
+  const total=state.set.questions.length;const acc=Math.round(state.correct/total*100);
+  el("score").innerHTML=`${state.correct}<small> / ${total}</small>`;
+  el("sub").textContent=`正答率 ${acc}% ・ 目標 ${fmtTime(state.set.target_sec)} ／ 実時間 ${fmtTime(Math.floor((Date.now()-state.start)/1000))}`;
+  const r=el("review");r.innerHTML="";
+  if(!state.wrong.length)r.innerHTML='<div class="item">全問正解です。</div>';
+  else for(const w of state.wrong)r.innerHTML+=`<div class="item"><b>${w.q}</b><br>正解：${w.correct}<br>${w.exp}</div>`;
+}
+el("next").addEventListener("click",next);
+el("retry").addEventListener("click",()=>startSet(state.set));
+el("homeBtn2").addEventListener("click",()=>{show("home");home();});
+document.addEventListener("keydown",e=>{
+  if(el("quiz").classList.contains("hidden"))return;
+  if(["1","2","3","4","5"].includes(e.key))choose(Number(e.key)-1);
+  else if(e.key==="Enter"&&state.answered)next();
+});
+home();
+</script>
+</body>
+</html>
