@@ -457,7 +457,14 @@ document.addEventListener("keydown", e=>{
   else if(e.key === "Enter" && state.answered) next();
 });
 
+const params = new URLSearchParams(location.search);
+const catParam = params.get("cat");
+if (catParam && CATS.includes(catParam)) state.cat = catParam;
+if (params.get("order") === "seq") state.order = "seq";
 refreshHome();
+if (params.get("autostart") === "1") {
+  setTimeout(()=>startSession(pool()), 80);
+}
 </script>
 </body>
 </html>
